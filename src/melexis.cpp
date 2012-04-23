@@ -7,11 +7,6 @@
 // hardware slave select pin on ATMEGA
 #define SLAVE_SELECT 53
 
-
-struct message {
-	byte bytes[8];
-};
-
 struct sensor mlx_sensors[MLX_MAX];
 
 static const byte crc_cba[256] = {
@@ -166,6 +161,10 @@ void mlx_query_all(void)
 		mlx_sensors[i].timestamp = micros();
 		mlx_sensors[i].alfa = in.bytes[0] + ((in.bytes[1] & 0x3f) << 8);
 		mlx_sensors[i].beta = in.bytes[2] + ((in.bytes[3] & 0x3f) << 8);
+		mlx_sensors[i].z = in.bytes[4] + ((in.bytes[5] & 0x3f) << 8);
+		if(in.bytes[1] & 0x20) mlx_sensors[i].alfa -= 16384;
+		if(in.bytes[3] & 0x20) mlx_sensors[i].beta -= 16384;
+		if(in.bytes[5] & 0x20) mlx_sensors[i].z -= 16384;
 //		prints("alpha=%d beta=%d\n", mlx_sensors[i].alfa, mlx_sensors[i].beta);
 	}
 }

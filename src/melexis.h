@@ -23,11 +23,15 @@ enum {
 	MLX_MAX,
 };
 
+struct message {
+	byte bytes[8];
+};
+
 void setup_mlx_spi();
 struct sensor {
 	byte active;
 	unsigned long timestamp;
-	int alfa, beta;
+	int alfa, beta, z;
 };
 
 extern int succ;

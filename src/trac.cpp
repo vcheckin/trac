@@ -29,7 +29,7 @@ void setup() {
 //	Timer1.initialize(50000); // microsecs
 //	Timer1.attachInterrupt(isr);
 }
-
+extern message in;
 void loop()
 {
 	int i;
@@ -42,7 +42,8 @@ void loop()
 		delayMicroseconds(700);
 	}
 	prints("queried all in %ld us, %d succ\n", micros() - mic, succ);
-	prints("%d %d\n", mlx_sensors[0].alfa, mlx_sensors[1].beta);
+	prints("%d %d %d\n", mlx_sensors[0].alfa, mlx_sensors[0].beta, mlx_sensors[0].z);
+	dump_buffer((char *)(in.bytes), 8);
 	delay(500);
 
 //
