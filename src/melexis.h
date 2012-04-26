@@ -28,12 +28,17 @@ struct message {
 };
 
 void setup_mlx_spi();
-struct sensor {
+
+struct mlx_sensor {
 	byte active;
 	unsigned long timestamp;
 	int alfa, beta, z;
 };
 
 extern int succ;
-extern struct sensor mlx_sensors[MLX_MAX];
+// TODO should not be in public API
+extern struct mlx_sensor mlx_sensors[MLX_MAX];
+
+void mlx_query_all(void);
+
 #endif /* MELEXIS_H_ */

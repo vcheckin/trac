@@ -7,46 +7,65 @@
 #include <AFmotor/AFMotor.h>
 #include <HardwareSerial.h>
 #include "trac.h"
-#include "melexis.h"
 #include "Timer3/Timer3.h"
 
-//AF_DCMotor motor(2, MOTOR12_64KHZ); // create motor #2, 64KHz pwm
+extern "C" {
+#include "thread.h"
+#include "melexis.h"
+}
 
-int led_on = 1;
-
-void isr()
+static void timer3_isr()
 {
 	digitalWrite(13, digitalRead(13) ^ 1);
 }
 
-void setup() {
-//	motor.setSpeed(200);     // set the speed to 200/255
-	Serial.begin(9600);
-	//scr_setup();
-	setup_mlx_spi();
-//	pinMode(13, OUTPUT);
-//	digitalWrite(13, 0);
-//	Timer1.initialize(50000); // microsecs
-//	Timer1.attachInterrupt(isr);
+int a = 0;
+static uint8_t stack[1024];
+
+static void rt_entry()
+{
+	DBG("entered");
+	while(1) {
+		a++;
+		yield();
+	}
 }
-extern message in;
+
+void setup() {
+	Serial.begin(9600);
+	DBG("setup\n");
+
+	pinMode(13, OUTPUT);
+	digitalWrite(13, 0);
+	setup_mlx_spi();
+	Timer1.initialize(100000); // us
+	Timer1.attachInterrupt(timer3_isr);
+	init_thread(0, rt_entry, stack, 1024);
+	//DBG("inited\n");
+
+}
+
 void loop()
 {
+#if 1
 	int i;
+	uint32_t dt;
 	succ = 0;
-	unsigned long mic = micros();
-	for(i = 0; i < 100; i++) {
+	for(i = 0; i < 25; i++) {
+		dt = micros();
 		mlx_query_all();
+		dt = micros() - dt;
 		// in simple tests 650us delay here gave about 50% success rate
 		// 700us -- 100% ok
 		delayMicroseconds(700);
 	}
-	prints("queried all in %ld us, %d succ\n", micros() - mic, succ);
-	prints("%d %d %d\n", mlx_sensors[0].alfa, mlx_sensors[0].beta, mlx_sensors[0].z);
-	dump_buffer((char *)(in.bytes), 8);
+	DBG("queried all in %ld us, %d succ\n", dt, succ);
+	DBG("%d %d %d\n", mlx_sensors[0].alfa, mlx_sensors[0].beta, mlx_sensors[0].z);
+	DBG("a=%d\n", a);
 	delay(500);
-
-//
+	yield();
+#endif
+	//
 //  motor.run(FORWARD);      // turn it on going forward
 //  delay(1000);
 //
@@ -59,14 +78,42 @@ void loop()
 //  delay(1000);
 }
 
+#ifdef SIMULATED
+static void simulavr_puts(const char *s)
+{
+	while(*s) {
+		(*((volatile char *)0x38)) = *s++;
+	}
+}
+#endif
 void prints(const char *fmt, ... )
 {
-	char tmp[128]; // resulting string limited to 128 chars
+	char tmp[64]; // resulting string limited to 128 chars
 	va_list args;
 	va_start (args, fmt );
 	vsnprintf(tmp, 128, fmt, args);
 	va_end (args);
+#ifndef SIMULATED
 	Serial.print(tmp);
+#else
+	simulavr_puts(tmp);
+#endif
+}
+
+void prints_P(const prog_char *fmtp, ... )
+{
+	char tmp[64]; // resulting string limited to 128 chars
+	char fmt[64];
+	va_list args;
+	va_start (args, fmtp );
+	strcpy_P(fmt, fmtp);
+	vsnprintf(tmp, 128, fmt, args);
+	va_end (args);
+#ifndef SIMULATED
+	Serial.print(tmp);
+#else
+	simulavr_puts(tmp);
+#endif
 }
 
 /**

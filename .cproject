@@ -57,7 +57,7 @@
 							<tool id="de.innot.avreclipse.tool.linker.winavr.app.debug.1820027115" name="AVR C Linker" superClass="de.innot.avreclipse.tool.linker.winavr.app.debug"/>
 							<tool id="de.innot.avreclipse.tool.cpplinker.app.debug.1736565066" name="AVR C++ Linker" superClass="de.innot.avreclipse.tool.cpplinker.app.debug">
 								<option id="de.innot.avreclipse.cpplinker.option.libs.34408085" name="Libraries (-l)" superClass="de.innot.avreclipse.cpplinker.option.libs" valueType="libs">
-									<listOptionValue builtIn="false" value="core"/>
+									<listOptionValue builtIn="false" value="core-atmega2560"/>
 								</option>
 								<option id="de.innot.avreclipse.cpplinker.option.libpath.1964366583" name="Libraries Path (-L)" superClass="de.innot.avreclipse.cpplinker.option.libpath" valueType="stringList">
 									<listOptionValue builtIn="false" value="${workspace_loc:}"/>

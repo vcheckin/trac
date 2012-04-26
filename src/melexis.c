@@ -2,12 +2,14 @@
  * melexis.cpp
  */
 #include "trac.h"
-#include <SPI/SPI.h>
+#include "spi.h"
 #include "melexis.h"
 // hardware slave select pin on ATMEGA
 #define SLAVE_SELECT 53
 
-struct sensor mlx_sensors[MLX_MAX];
+struct mlx_sensor mlx_sensors[MLX_MAX];
+
+#define SPI_MODE_MASK 0x0C  // CPOL = bit 3, CPHA = bit 2 on SPCR
 
 static const byte crc_cba[256] = {
 		0x00 ,0x2f ,0x5e ,0x71 ,0xbc ,0x93 ,0xe2 ,0xcd,
@@ -75,47 +77,33 @@ static inline int transfer_message(int chip, const struct message *out, struct m
 	int i;
 	select_sensor(chip);
 	for(i = 0; i < 8; i++) {
-		in->bytes[i] = SPI.transfer(out->bytes[i]);
+		in->bytes[i] = spi_transfer(out->bytes[i]);
 	}
 	deselect_sensor(chip);
 	return (crc8(in->bytes) != in->bytes[7]);
 }
 
-message out = {{0}};
-message in;
+struct message out = {{0}};
+struct message in;
 
-// setup SPI per mlx specs
-void setup_mlx_spi()
-{
-	SPI.begin();
-	SPI.setBitOrder(MSBFIRST);
-	// CPOL=0 CPHA=1
-	SPI.setDataMode(SPI_MODE1);
-	// datasheet says min clock period 1.8us
-	// minimum time between two GETS is 1050 ms
-	// With 3m UTP cable DIV8 was pretty stable
-	// DIV4 didn't work
-	SPI.setClockDivider(SPI_CLOCK_DIV8); // 16Mhz / 32 = 500kHz
-}
+
 void init_proto()
 {
-	int i, retr;
+	int i;
 	// send a NOP challenge to every device
 	out.bytes[2] = 0x5a; // key
 	out.bytes[3] = 0xa5; // key
 	out.bytes[6] = 0xd0; // NOP challenge, 1101 0000, opcode = 16
 	out.bytes[7] = crc8(out.bytes);
 	for(i = 0; i < MLX_MAX; i++) {
-		if(transfer_message(i, &out, &in) && retr--) {
-			prints("invalid crc in initial reply from sensor %d\n", i);
-			dump_buffer((const char *)(in.bytes), 8);
+		if(transfer_message(i, &out, &in)) {
+			DBG("invalid crc in initial reply from sensor %d\n", i);
 		}
 	}
-
-	delay(1); // millisecs
+	dump_buffer((const char *)(in.bytes), 8);
 
 	// craft GET1 command
-	// max data timeout in us, or 65.5 ms
+	// max data timeout is 65535 us, or 65.5 ms
 
 	out.bytes[2] = 0xff; out.bytes[3] = 0xff;
 	out.bytes[6] = (1 << 6) + 19; // marker = 1 (alpha + beta + diag), opcode = 19 (GET1)
@@ -123,17 +111,33 @@ void init_proto()
 	for(i = 0; i < MLX_MAX; i++) {
 		// send GET1, expect NOP reply
 		if(transfer_message(i, &out, &in)) {
-			prints("invalid crc %x in NOP reply from sensor %d\n", in.bytes[7], i);
+			DBG("invalid crc %x in NOP reply from sensor %d\n", in.bytes[7], i);
 			dump_buffer((const char *)(in.bytes), 8);
 		}
 		if(in.bytes[2] != 0x5a || in.bytes[3] != 0xa5 ||
 			in.bytes[4] != 0xa5 || in.bytes[5] != 0x5a )
 		{
-			prints("invalid key, sensor %d\n", i);
+			DBG("invalid key, sensor %d\n", i);
 			dump_buffer((const char *)(in.bytes), 8);
 		}
 	}
 
+}
+
+// setup SPI per mlx specs
+void setup_mlx_spi()
+{
+	spi_begin();
+	spi_setBitOrder(MSBFIRST);
+	// CPOL=0 CPHA=1
+	spi_setDataMode(SPI_MODE1);
+	// datasheet says min clock period 1.8us
+	// minimum time between two GETS is 1050 ms
+	// With 3m UTP cable DIV8 was pretty stable
+	// DIV4 didn't work.
+	// 16Mhz / 32 = 500kHz
+	spi_setClockDivider(SPI_CLOCK_DIV32);
+	init_proto();
 }
 
 int succ = 0;
@@ -141,19 +145,20 @@ void mlx_query_all(void)
 {
 	int i;
 	memset(&out, 0, 8);
+
 	// craft GET1 command
 	// max data timeout in us, or 65.5 ms
-
 	out.bytes[2] = 0xff; out.bytes[3] = 0xff;
 	out.bytes[6] = (0 << 6) + 19; // marker = 1 (alpha + beta + diag), opcode = 19 (GET1)
 	out.bytes[7] = crc8(out.bytes);
 	for(i = 0; i < MLX_MAX; i++) {
 		// send GET1, expect normal data packet
 		if(transfer_message(i, &out, &in)) {
-			prints("invalid crc");
+			prints("invalid crc\n");
 			mlx_sensors[i].active = 0;
 			continue;
 		}
+		// is this a regular packet?
 		if((in.bytes[6] & 0xc0) != 0xc0)
 			succ++;
 //		dump_buffer((const char *)(out.bytes), 8);
@@ -165,6 +170,5 @@ void mlx_query_all(void)
 		if(in.bytes[1] & 0x20) mlx_sensors[i].alfa -= 16384;
 		if(in.bytes[3] & 0x20) mlx_sensors[i].beta -= 16384;
 		if(in.bytes[5] & 0x20) mlx_sensors[i].z -= 16384;
-//		prints("alpha=%d beta=%d\n", mlx_sensors[i].alfa, mlx_sensors[i].beta);
 	}
 }
