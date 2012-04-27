@@ -14,18 +14,14 @@ extern "C" {
 #include "melexis.h"
 }
 
-static void timer3_isr()
-{
-	digitalWrite(13, digitalRead(13) ^ 1);
-}
-
 int a = 0;
 static uint8_t stack[1024];
 
 static void rt_entry()
 {
-	DBG("entered");
+	DBG("entered\n");
 	while(1) {
+		mlx_query_all();
 		a++;
 		yield();
 	}
@@ -38,32 +34,51 @@ void setup() {
 	pinMode(13, OUTPUT);
 	digitalWrite(13, 0);
 	setup_mlx_spi();
-	Timer1.initialize(100000); // us
-	Timer1.attachInterrupt(timer3_isr);
+
+
 	init_thread(0, rt_entry, stack, 1024);
-	//DBG("inited\n");
+
+	cli();          // disable global interrupts
+	TCCR1A = 0;     // set entire TCCR1A register to 0
+	TCCR1B = 0;     // same for TCCR1B
+
+	// set compare match register to desired timer count:
+	OCR1A = (F_CPU / 8) / 100;
+	// turn on CTC mode:
+	TCCR1B |= _BV(WGM12);
+	// Set CS10 and CS12 bits for /1024
+	// CS11 for /8
+	TCCR1B |= _BV(CS11);
+	//	enable timer compare interrupt:
+	TIMSK1 |= (1 << OCIE1A);
+	sei();
+
+	DBG("inited\n");
 
 }
 
 void loop()
 {
 #if 1
-	int i;
-	uint32_t dt;
-	succ = 0;
-	for(i = 0; i < 25; i++) {
-		dt = micros();
-		mlx_query_all();
-		dt = micros() - dt;
-		// in simple tests 650us delay here gave about 50% success rate
-		// 700us -- 100% ok
-		delayMicroseconds(700);
-	}
-	DBG("queried all in %ld us, %d succ\n", dt, succ);
+//	int i;
+//	uint32_t dt;
+//	succ = 0;
+//	for(i = 0; i < 25; i++) {
+//		dt = micros();
+//		mlx_query_all();
+//		dt = micros() - dt;
+//		// in simple tests 650us delay here gave about 50% success rate
+//		// 700us -- 100% ok
+//		delayMicroseconds(700);
+//	}
+//	DBG("queried all in %ld us, %d succ\n", dt, succ);
+//	DBG("%d %d %d\n", mlx_sensors[0].alfa, mlx_sensors[0].beta, mlx_sensors[0].z);
+//	DBG("a=%d\n", a);
+	delay(1000);
+	DBG("ovr=%ld dt=%ld\n", overruns, dt);
+	DBG("crc=%d err=%d ntt=%d\n", crc_err, error, ntt);
+	DBG("ticks=%d micros=%ld\n", a, micros());
 	DBG("%d %d %d\n", mlx_sensors[0].alfa, mlx_sensors[0].beta, mlx_sensors[0].z);
-	DBG("a=%d\n", a);
-	delay(500);
-	yield();
 #endif
 	//
 //  motor.run(FORWARD);      // turn it on going forward

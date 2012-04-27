@@ -86,4 +86,6 @@ asm volatile (\
     "pop  r0\n\t" \
 )
 
+extern volatile unsigned long overruns;
+
 #endif /* THREAD_H_ */

@@ -4,14 +4,13 @@
 #include "trac.h"
 #include "spi.h"
 #include "melexis.h"
+
 // hardware slave select pin on ATMEGA
 #define SLAVE_SELECT 53
 
 struct mlx_sensor mlx_sensors[MLX_MAX];
 
-#define SPI_MODE_MASK 0x0C  // CPOL = bit 3, CPHA = bit 2 on SPCR
-
-static const byte crc_cba[256] = {
+static const uint8_t crc_cba[256] = {
 		0x00 ,0x2f ,0x5e ,0x71 ,0xbc ,0x93 ,0xe2 ,0xcd,
 		0x57 ,0x78 ,0x09 ,0x26 ,0xeb ,0xc4 ,0xb5 ,0x9a,
 		0xae ,0x81 ,0xf0 ,0xdf ,0x12 ,0x3d ,0x4c ,0x63,
@@ -46,9 +45,10 @@ static const byte crc_cba[256] = {
 		0x8f ,0xa0 ,0xd1 ,0xfe ,0x33 ,0x1c ,0x6d ,0x42,
 };
 
-static byte crc8(const byte *data)
+/** CRC8, per MLX datasheet */
+static uint8_t crc8(const uint8_t *data)
 {
-	unsigned char crc = 0xff;
+	uint8_t crc = 0xff;
 	crc = crc_cba[crc ^ data[0]];
 	crc = crc_cba[crc ^ data[1]];
 	crc = crc_cba[crc ^ data[2]];
@@ -85,7 +85,6 @@ static inline int transfer_message(int chip, const struct message *out, struct m
 
 struct message out = {{0}};
 struct message in;
-
 
 void init_proto()
 {
@@ -136,16 +135,26 @@ void setup_mlx_spi()
 	// With 3m UTP cable DIV8 was pretty stable
 	// DIV4 didn't work.
 	// 16Mhz / 32 = 500kHz
-	spi_setClockDivider(SPI_CLOCK_DIV32);
+
+
+	// /128 dt=540us
+	// /64 dt=284us
+	// /32 dt=160
+	// /16 dt=96
+	// /8 =
+	spi_setClockDivider(SPI_CLOCK_DIV128);
 	init_proto();
 }
 
-int succ = 0;
+volatile long int dt;
+volatile int crc_err = 0;
+volatile int ntt = 0;
+volatile int error = 0;
+volatile int normal = 0;
 void mlx_query_all(void)
 {
 	int i;
 	memset(&out, 0, 8);
-
 	// craft GET1 command
 	// max data timeout in us, or 65.5 ms
 	out.bytes[2] = 0xff; out.bytes[3] = 0xff;
@@ -153,14 +162,19 @@ void mlx_query_all(void)
 	out.bytes[7] = crc8(out.bytes);
 	for(i = 0; i < MLX_MAX; i++) {
 		// send GET1, expect normal data packet
+		dt = micros();
 		if(transfer_message(i, &out, &in)) {
-			prints("invalid crc\n");
+			//prints("invalid crc\n");
 			mlx_sensors[i].active = 0;
+			crc_err++;
 			continue;
 		}
+		dt = micros() - dt;
 		// is this a regular packet?
 		if((in.bytes[6] & 0xc0) != 0xc0)
-			succ++;
+			normal++;
+		else
+			in.bytes[6] == 0xfe ? ntt++ : error++;
 //		dump_buffer((const char *)(out.bytes), 8);
 //		dump_buffer((const char *)(in.bytes), 8);
 		mlx_sensors[i].timestamp = micros();

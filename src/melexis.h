@@ -20,7 +20,7 @@ enum {
 //	MLX_2,
 //	MLX_3,
 //	MLX_4,
-	MLX_MAX,
+	MLX_MAX = 1,
 };
 
 struct message {
@@ -35,8 +35,15 @@ struct mlx_sensor {
 	int alfa, beta, z;
 };
 
-extern int succ;
 // TODO should not be in public API
+
+extern volatile long int dt;
+
+extern volatile int crc_err;
+extern volatile int ntt;
+extern volatile int error;
+extern volatile int normal;
+
 extern struct mlx_sensor mlx_sensors[MLX_MAX];
 
 void mlx_query_all(void);
