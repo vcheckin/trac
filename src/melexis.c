@@ -64,12 +64,14 @@ static uint8_t crc8(const uint8_t *data)
  */
 static inline void select_sensor(int chip)
 {
-	digitalWrite(SLAVE_SELECT, LOW);
+	if(chip == 0)
+		digitalWrite(SLAVE_SELECT, LOW);
 }
 
 static inline void deselect_sensor(int chip)
 {
-	digitalWrite(SLAVE_SELECT, HIGH);
+	if(chip == 0)
+		digitalWrite(SLAVE_SELECT, HIGH);
 }
 
 static inline int transfer_message(int chip, const struct message *out, struct message *in)
@@ -149,7 +151,7 @@ void setup_mlx_spi()
 volatile long int dt;
 volatile int crc_err = 0;
 volatile int ntt = 0;
-volatile int error = 0;
+volatile int error_cnt = 0;
 volatile int normal = 0;
 void mlx_query_all(void)
 {
@@ -161,20 +163,22 @@ void mlx_query_all(void)
 	out.bytes[6] = (0 << 6) + 19; // marker = 1 (alpha + beta + diag), opcode = 19 (GET1)
 	out.bytes[7] = crc8(out.bytes);
 	for(i = 0; i < MLX_MAX; i++) {
+		int res;
 		// send GET1, expect normal data packet
 		dt = micros();
-		if(transfer_message(i, &out, &in)) {
+		res = transfer_message(i, &out, &in);
+		dt = micros() - dt;
+		if(res) {
 			//prints("invalid crc\n");
 			mlx_sensors[i].active = 0;
 			crc_err++;
 			continue;
 		}
-		dt = micros() - dt;
 		// is this a regular packet?
 		if((in.bytes[6] & 0xc0) != 0xc0)
 			normal++;
 		else
-			in.bytes[6] == 0xfe ? ntt++ : error++;
+			in.bytes[6] == 0xfe ? ntt++ : error_cnt++;
 //		dump_buffer((const char *)(out.bytes), 8);
 //		dump_buffer((const char *)(in.bytes), 8);
 		mlx_sensors[i].timestamp = micros();

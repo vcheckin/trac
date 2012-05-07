@@ -18,8 +18,12 @@ void dump_buffer(const char *buf, int len);
 #ifdef __cplusplus
 }
 #endif
-
+//#define DBG(fmt, arg...)
 #define DBG(fmt, arg...) do { \
 	PROGMEM static const prog_char __fmt[] = fmt; \
 	prints_P(__fmt, ##arg);} while(0)
+
+//#define DBG(fmt, arg...) do { \
+	prints(fmt, ##arg);} while(0)
+
 #endif /* TRAC_H_ */

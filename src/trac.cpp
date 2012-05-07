@@ -13,16 +13,30 @@ extern "C" {
 #include "thread.h"
 #include "melexis.h"
 }
-
-int a = 0;
+AF_DCMotor motor(2);
+uint32_t a = 0;
 static uint8_t stack[1024];
 
 static void rt_entry()
 {
-	DBG("entered\n");
 	while(1) {
+		int dir;
+		int speed = 0;
+		int al = mlx_sensors[0].alfa;
 		mlx_query_all();
 		a++;
+		if(al > 0)
+			dir = FORWARD;
+		else
+			dir = BACKWARD;
+		if(al > -256 && al < 256)
+			dir = RELEASE;
+		if(al > 1024 || al < -1024)
+			speed = 255;
+		else
+			speed = 64 +  (abs(al) >> 3);
+		motor.setSpeed(speed);
+		motor.run(dir);
 		yield();
 	}
 }
@@ -42,7 +56,7 @@ void setup() {
 	TCCR1A = 0;     // set entire TCCR1A register to 0
 	TCCR1B = 0;     // same for TCCR1B
 
-	// set compare match register to desired timer count:
+	// set compare match register to desired timer count 50HZ
 	OCR1A = (F_CPU / 8) / 100;
 	// turn on CTC mode:
 	TCCR1B |= _BV(WGM12);
@@ -74,11 +88,17 @@ void loop()
 //	DBG("queried all in %ld us, %d succ\n", dt, succ);
 //	DBG("%d %d %d\n", mlx_sensors[0].alfa, mlx_sensors[0].beta, mlx_sensors[0].z);
 //	DBG("a=%d\n", a);
-	delay(1000);
+	digitalWrite(13, !digitalRead(13));
+	delay(100);
+	Serial.print(overruns);
+	Serial.print(' ');
+	Serial.println(mlx_sensors[0].alfa);
+//	DBG("Tick\n");
 	DBG("ovr=%ld dt=%ld\n", overruns, dt);
-	DBG("crc=%d err=%d ntt=%d\n", crc_err, error, ntt);
-	DBG("ticks=%d micros=%ld\n", a, micros());
-	DBG("%d %d %d\n", mlx_sensors[0].alfa, mlx_sensors[0].beta, mlx_sensors[0].z);
+//	DBG("crc=%d err=%d ntt=%d\n", crc_err, error_cnt, ntt);
+//	DBG("ticks=%ld micros=%ld\n", a, micros());
+//	DBG("%d %d %d\n", mlx_sensors[0].alfa, mlx_sensors[0].beta, mlx_sensors[0].z);
+//	DBG("sp=%p sp=%p\n", threads[0].sp, threads[1].sp);
 #endif
 	//
 //  motor.run(FORWARD);      // turn it on going forward
@@ -103,31 +123,33 @@ static void simulavr_puts(const char *s)
 #endif
 void prints(const char *fmt, ... )
 {
-	char tmp[64]; // resulting string limited to 128 chars
+	char tmp[64]; // resulting string limited
 	va_list args;
 	va_start (args, fmt );
-	vsnprintf(tmp, 128, fmt, args);
+	vsnprintf(tmp, sizeof(tmp), fmt, args);
 	va_end (args);
 #ifndef SIMULATED
 	Serial.print(tmp);
 #else
-	simulavr_puts(tmp);
+	//simulavr_puts(tmp);
+	Serial.print(tmp);
 #endif
 }
 
 void prints_P(const prog_char *fmtp, ... )
 {
-	char tmp[64]; // resulting string limited to 128 chars
+	char tmp[64]; // resulting string limited
 	char fmt[64];
 	va_list args;
 	va_start (args, fmtp );
-	strcpy_P(fmt, fmtp);
-	vsnprintf(tmp, 128, fmt, args);
+	strncpy_P(fmt, fmtp, sizeof(fmt));
+	vsnprintf(tmp, sizeof(tmp), fmt, args);
 	va_end (args);
 #ifndef SIMULATED
 	Serial.print(tmp);
 #else
 	simulavr_puts(tmp);
+	Serial.print(tmp);
 #endif
 }
 

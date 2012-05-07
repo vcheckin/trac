@@ -88,4 +88,11 @@ asm volatile (\
 
 extern volatile unsigned long overruns;
 
+// FIXME should not be public
+struct thread {
+	/** saved stack pointer */
+	uint8_t *sp;
+};
+
+extern volatile struct thread threads[2];
 #endif /* THREAD_H_ */

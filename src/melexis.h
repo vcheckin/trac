@@ -8,19 +8,15 @@
 
 // devices on SPI bus
 enum {
-	MLX_WHEEL_FR = 0,
-//	MLX_WHEEL_FL,
-//	MLX_WHEEL_RR,
-//	MLX_WHEEL_RL,
-//	MLX_VLV_FR,
-//	MLX_VLV_FL,
-//	MLX_VLV_RR,
-//	MLX_VLV_RL,
-//	MLX_1,
-//	MLX_2,
-//	MLX_3,
-//	MLX_4,
-	MLX_MAX = 1,
+	MLX_VLV_FR,
+	MLX_VLV_FL,
+	MLX_VLV_RR,
+	MLX_VLV_RL,
+	MLX_PRESS_A,
+	MLX_PRESS_B,
+	MLX_STEER,
+	MLX_TREADLE,
+	MLX_MAX,
 };
 
 struct message {
@@ -41,7 +37,7 @@ extern volatile long int dt;
 
 extern volatile int crc_err;
 extern volatile int ntt;
-extern volatile int error;
+extern volatile int error_cnt;
 extern volatile int normal;
 
 extern struct mlx_sensor mlx_sensors[MLX_MAX];

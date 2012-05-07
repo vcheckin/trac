@@ -7,13 +7,8 @@
 
 #include "thread.h"
 
-struct thread {
-	/** saved stack pointer */
-	uint8_t *sp;
-};
-
 volatile uint8_t current_thread = 1;
-struct thread threads[2] = {{0}};
+volatile struct thread threads[2] = {{0}};
 
 volatile unsigned long overruns = 0;
 
@@ -35,7 +30,6 @@ uint8_t *schedule_tick(uint8_t *sp)
 
 ISR(TIMER1_COMPA_vect, ISR_NAKED)
 {
-	cli();
 	save_context();
 	asm volatile (
 		"in   r24, 0x3d\n\t" // SPL
