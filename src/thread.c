@@ -19,6 +19,9 @@ uint8_t *schedule(uint8_t *sp)
 	return threads[current_thread].sp;
 }
 
+/**
+ * @return new stack pointer
+ */
 uint8_t *schedule_tick(uint8_t *sp)
 {
 	threads[current_thread].sp = sp;

@@ -1,6 +1,6 @@
 /*
 */
-#include <WProgram.h>
+#include <Arduino.h>
 
 #if 1
 static const byte Font5x9Mono[535] =
@@ -357,7 +357,7 @@ void setColor(byte r, byte g, byte b) {
  *  Created on: Apr 19, 2012
  *      Author: cve
  */
-#include <WProgram.h>
+#include <Arduino.h>
 /*
 
   Fry LCD test sketch
@@ -370,7 +370,7 @@ const int SCOMMAND = 0;
 const int SDATA = 1;
 const int DC = 4;
 const int CS = 2;
-const int SDA = 6;
+#define SDA 6
 const int RESET = 3;
 const int CLK = 5;
 

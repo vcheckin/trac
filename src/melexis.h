@@ -9,13 +9,13 @@
 // devices on SPI bus
 enum {
 	MLX_VLV_FR,
-	MLX_VLV_FL,
-	MLX_VLV_RR,
-	MLX_VLV_RL,
-	MLX_PRESS_A,
-	MLX_PRESS_B,
-	MLX_STEER,
-	MLX_TREADLE,
+//	MLX_VLV_FL,
+//	MLX_VLV_RR,
+//	MLX_VLV_RL,
+//	MLX_PRESS_A,
+//	MLX_PRESS_B,
+//	MLX_STEER,
+//	MLX_TREADLE,
 	MLX_MAX,
 };
 

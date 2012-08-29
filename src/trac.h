@@ -5,7 +5,7 @@
 #ifndef TRAC_H_
 #define TRAC_H_
 
-#include <WProgram.h>
+#include <Arduino.h>
 #include <avr/pgmspace.h>
 #ifdef __cplusplus
 extern "C" {

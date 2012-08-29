@@ -4,8 +4,7 @@
  *  Created on: Apr 25, 2012
  *      Author: cve
  */
-#include "pins_arduino.h"
-#include "WProgram.h"
+#include "Arduino.h"
 #include "spi.h"
 
 

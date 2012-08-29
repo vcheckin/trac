@@ -34,6 +34,7 @@
 								<option id="de.innot.avreclipse.compiler.option.optimize.1283165805" name="Optimization Level" superClass="de.innot.avreclipse.compiler.option.optimize" value="de.innot.avreclipse.compiler.optimize.size" valueType="enumerated"/>
 								<option id="de.innot.avreclipse.compiler.option.incpath.454478012" name="Include Paths (-I)" superClass="de.innot.avreclipse.compiler.option.incpath" valueType="includePath">
 									<listOptionValue builtIn="false" value="/usr/share/arduino/hardware/arduino/cores/arduino/"/>
+									<listOptionValue builtIn="false" value="/usr/share/arduino/hardware/arduino/variants/mega"/>
 								</option>
 								<option id="de.innot.avreclipse.compiler.option.optimize.packstruct.430587142" name="Pack structs (-fpack-struct)" superClass="de.innot.avreclipse.compiler.option.optimize.packstruct" value="false" valueType="boolean"/>
 								<option id="de.innot.avreclipse.compiler.option.optimize.shortenums.581033769" name="Short enums (-fshort-enums)" superClass="de.innot.avreclipse.compiler.option.optimize.shortenums" value="false" valueType="boolean"/>
@@ -47,6 +48,7 @@
 								<option id="de.innot.avreclipse.cppcompiler.option.incpath.757050984" name="Include Paths (-I)" superClass="de.innot.avreclipse.cppcompiler.option.incpath" valueType="includePath">
 									<listOptionValue builtIn="false" value="/usr/share/arduino/hardware/arduino/cores/arduino/"/>
 									<listOptionValue builtIn="false" value="${workspace_loc:/${ProjName}/arduinolib}"/>
+									<listOptionValue builtIn="false" value="/usr/share/arduino/hardware/arduino/variants/mega"/>
 								</option>
 								<option id="de.innot.avreclipse.cppcompiler.option.optimize.packstruct.708172100" name="Pack structs (-fpack-struct)" superClass="de.innot.avreclipse.cppcompiler.option.optimize.packstruct" value="false" valueType="boolean"/>
 								<option id="de.innot.avreclipse.cppcompiler.option.optimize.shortenums.1802998260" name="Short enums (-fshort-enums)" superClass="de.innot.avreclipse.cppcompiler.option.optimize.shortenums" value="false" valueType="boolean"/>

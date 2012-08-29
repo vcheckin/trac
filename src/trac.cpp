@@ -3,7 +3,7 @@
  */
 
 #include <stdarg.h>
-#include <WProgram.h>
+#include <Arduino.h>
 #include <AFmotor/AFMotor.h>
 #include <HardwareSerial.h>
 #include "trac.h"
