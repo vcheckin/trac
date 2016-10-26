@@ -1,6 +1,5 @@
 /*
  * spi.h
- *
  */
 
 #ifndef SPI_H_
